@@ -1,5 +1,8 @@
 <?php
 session_start();
+include dirname(__DIR__, 1) . '/db_data/auth.php';
+checkLogin();
+
 $mysqli = new mysqli("db", "Jannie.Hamberg@medieinstitutet.se", "userpassword", "test");
 
 if ($mysqli->connect_error) {

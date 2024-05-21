@@ -5,7 +5,6 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../send_email.php';
 include __DIR__ . '/../partials/header.php';
 
-echo basename(__FILE__);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $first_name = $_POST['first_name'];

@@ -1,5 +1,5 @@
 <?php
-require 'config.php';
+include 'config.php';
 
 function sendEmail($to, $subject, $body) {
     global $env;
@@ -12,6 +12,7 @@ function sendEmail($to, $subject, $body) {
     curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
     curl_setopt($ch, CURLOPT_USERPWD, 'api:' . $apiKey);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, [
         'from' => 'noreply@yourdomain.com',
@@ -21,12 +22,13 @@ function sendEmail($to, $subject, $body) {
     ]);
 
     $result = curl_exec($ch);
-    if (curl_errno($ch)) {
-        echo 'Error: ' . curl_error($ch);
+    if(curl_errno($ch)) {
+        $error = 'Error: ' . curl_error($ch);
+        curl_close($ch);
+        return $error;
     }
 
     curl_close($ch);
-
     return $result;
 }
 
@@ -42,20 +44,29 @@ function emailExists($email) {
     return $exists;
 }
 
-// Place this check around your existing code for email handling
 if (basename($_SERVER['PHP_SELF']) == 'reset_password.php') {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $to = $_POST['email'];
-        $subject = 'Password Reset';
-        $body = 'You requested a password reset. Here is your link: ...';
+        $email = $_POST['email'];
 
-        if (emailExists($to)) {
-            $randomCode = bin2hex(random_bytes(25)); // Generate random code for reset link
-            $body .= "\n\nYour verification code is: $randomCode";
+        if (emailExists($email)) {
+            $randomCode = bin2hex(random_bytes(25));
+            $resetLink = "http://localhost:8080/pages/set_new_password.php?token=$randomCode";
+            $body = "You requested a password reset. Click the link to reset your password: $resetLink";
+            $subject = 'Password Reset';
 
-            $response = sendEmail($to, $subject, $body);
-            echo '<p>Email sent successfully.</p>';
-            echo '<p>Response: ' . htmlspecialchars($response) . '</p>';
+            $mysqli = connectDB();
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+30 minutes'));
+
+            $stmt = $mysqli->prepare("DELETE FROM password_resets WHERE email = ?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+
+            $stmt = $mysqli->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $email, $randomCode, $expiresAt);
+            $stmt->execute();
+
+            $response = sendEmail($email, $subject, $body);
+           
         } else {
             echo '<p>Email not found in users table.</p>';
         }
@@ -63,33 +74,3 @@ if (basename($_SERVER['PHP_SELF']) == 'reset_password.php') {
 }
 ?>
 
-
-<!-- 
-<form method="post" action="send_email.php">
-    <label for="email">Email:</label>
-    <input type="email" name="email" id="email" required>
-    <button type="submit">Send Reset Link</button>
-</form> -->
-
-
-<!-- <div class="flex items-center justify-center h-screen bg-green-700">
-    <div class="bg-white p-8 rounded shadow-md w-full max-w-md bg-green-700">
-        <h1 class="text-xl mb-4">Send Email via Mailgun</h1>
-        <form action="send_email.php" method="post">
-            <div class="mb-4">
-                <label for="to" class="block text-gray-700">To:</label>
-                <input type="email" name="to" id="to" class="w-full px-3 py-2 border rounded" required>
-            </div>
-            <div class="mb-4">
-                <label for="subject" class="block text-gray-700">Subject:</label>
-                <input type="text" name="subject" id="subject" class="w-full px-3 py-2 border rounded" required>
-            </div>
-            <div class="mb-4">
-                <label for="body" class="block text-gray-700">Body:</label>
-                <textarea name="body" id="body" rows="4" class="w-full px-3 py-2 border rounded" required></textarea>
-            </div>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Send Email</button>
-        </form>
-    </div>
-</div>
- -->
