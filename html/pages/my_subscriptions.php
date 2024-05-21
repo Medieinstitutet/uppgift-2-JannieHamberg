@@ -1,7 +1,8 @@
 <?php
 session_start();
+include dirname(__DIR__, 1) . '/db_data/auth.php';
+checkLogin();
 include dirname(__DIR__) . '/db_data/database.php';
-echo basename(__FILE__);
 
 function fetchSubscriptions($userId) {
     $mysqli = connectDB();

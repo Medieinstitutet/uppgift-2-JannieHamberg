@@ -1,41 +1,66 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+session_start();
+include dirname(__DIR__, 1) . '/db_data/auth.php';
+checkLogin();
+include_once dirname(__DIR__) . '/db_data/database.php';
+include_once dirname(__DIR__) . '/send_email.php';
+include_once dirname(__DIR__) . '/config.php';
 
-require_once __DIR__ . '/../db_data/database.php';
-require_once __DIR__ . '/../send_email.php';
-require_once __DIR__ . '/../config.php';
-include __DIR__ . '/../partials/header.php';
-
-echo "Checkpoint 1";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    echo "Form was submitted";
     $email = $_POST['email'];
-    $token = bin2hex(random_bytes(50));
-    $expires = date('U') + 1800;
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo 'Invalid email format';
+        exit;
+    }
 
     $mysqli = connectDB();
-    $stmt = $mysqli->prepare("DELETE FROM password_resets WHERE email = ?");
+    $stmt = $mysqli->prepare("SELECT id FROM users WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
+    $stmt->store_result();
 
-    $stmt = $mysqli->prepare("INSERT INTO password_resets (email, token, expires) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $email, $token, $expires);
-    $stmt->execute();
+    if ($stmt->num_rows > 0) {
+        $token = bin2hex(random_bytes(50));
+        $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
-    $resetLink = "http://localhost/pages/set_new_password.php?token=$token";
-    sendEmail($email, 'Reset your password', "Click the link to reset your password: $resetLink");
+        $stmt = $mysqli->prepare("DELETE FROM password_resets WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
 
-    echo "An email has been sent to reset your password.";
+        $stmt = $mysqli->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)");
+        $stmt->bind_param("sss", $email, $token, $expires);
+        $stmt->execute();
+
+        $resetLink = "http://localhost:8080/pages/set_new_password.php?token=$token";
+        $subject = 'Password Reset';
+        $body = "You requested a password reset. Click the link to reset your password: $resetLink";
+
+        $response = sendEmail($email, $subject, $body);
+
+      
+    } else {
+        echo 'Email not found in users table.';
+    }
+
+    $stmt->close();
+    $mysqli->close();
 }
+include '../partials/header.php';
 ?>
 
-<form method="post" action="reset_password.php">
-    <label for="email">Email:</label>
-    <input type="email" name="email" id="email" required>
-    <button type="submit">Send Reset Link</button>
-</form>
+<main class="mt-10 max-w-lg mx-auto p-6 bg-white shadow-md rounded-md">
+    <h2 class="text-2xl font-semibold mb-4">Reset Password</h2>
+    <form method="POST" action="reset_password.php">
+        <div class="mb-4">
+            <label for="email" class="block text-sm font-medium text-gray-700">Email:</label>
+            <input type="email" name="email" id="email" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
+        </div>
+        <div>
+            <button type="submit" class="w-full bg-blue-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-600">Send Reset Link</button>
+        </div>
+    </form>
+</main>
 
 <?php include __DIR__ . '/../partials/footer.php'; ?>

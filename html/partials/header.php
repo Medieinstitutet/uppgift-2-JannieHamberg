@@ -23,12 +23,14 @@ $base_url = "http://localhost:8080/";
             <?php elseif ($_SESSION['role'] == 'subscriber'): ?>
                 <li><a href="<?= $base_url; ?>pages/all_newsletters.php" class="text-white hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">All Newsletters</a></li>
                 <li><a href="<?= $base_url; ?>pages/my_subscriptions.php" class="text-white hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">My Subscriptions</a></li>
+                <li><a href="<?= $base_url ?>pages/my_pages.php" class="text-white hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">My Pages</a></li>
                 <li><a href="<?= $base_url; ?>session.php" class="text-white hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">Logout</a></li>
             <?php elseif ($_SESSION['role'] == 'customer'): ?>
                 <li><a href="<?= $base_url; ?>pages/my_subscribers.php" class="text-white hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">My Subscribers</a></li>
                 <li><a href="<?= $base_url; ?>pages/my_newsletter.php" class="text-white hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">My Newsletter</a></li>
-                <li><a href="<?php echo $base_url; ?>pages/create_newsletter.php" class="text-white">Create Newsletter</a></li>
-                <li><a href="<?= $base_url; ?>pages/session.php" class="text-white hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">Logout</a></li>
+                <li><a href="<?= $base_url; ?>pages/create_newsletter.php" class="text-white">Create Newsletter</a></li>
+                <li><a href="<?= $base_url ?>pages/my_pages.php" class="text-white hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">My Pages</a></li>
+                <li><a href="<?= $base_url; ?>session.php" class="text-white hover:text-blue-500 px-3 py-2 rounded-md text-sm font-medium">Logout</a></li>
             <?php endif; ?>
         </ul>
     </nav>

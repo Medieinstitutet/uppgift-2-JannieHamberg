@@ -1,62 +1,57 @@
 <?php
-
 session_start();
-include dirname(__DIR__, 1) . '/db_data/database.php';
+include dirname(__DIR__, 1) . '/db_data/auth.php';
+checkLogin();
+include dirname(__DIR__) . '/db_data/database.php';
 
-createUsersTable();
-echo basename(__FILE__); 
-
-function fetchSubscribers() {
-    $mysqli = connectDB();
-    $sql = "SELECT id, username, role FROM users WHERE role = 'subscriber'";  
-    $result = $mysqli->query($sql);
-
-    if ($result->num_rows > 0) {
-  
-        $users = [];
-        while ($row = $result->fetch_assoc()) {
-            $users[] = $row;
-        }
-        $mysqli->close();
-        return $users;
-    } else {
-        $mysqli->close();
-        return [];
-    }
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
+    echo "You must be logged in as a customer to view this page.";
+    exit;
 }
 
+function fetchSubscribers($customerId) {
+    $mysqli = connectDB();
+    $sql = "SELECT id, first_name, last_name, email FROM users WHERE role = 'subscriber'";
+    $result = $mysqli->query($sql);
 
-$users = fetchSubscribers();
+    $subscribers = [];
+    while ($row = $result->fetch_assoc()) {
+        $subscribers[] = $row;
+    }
 
+    $mysqli->close();
+    return $subscribers;
+}
 
-include '../partials/header.php'; ?>
+$subscribers = fetchSubscribers($_SESSION['user_id']);
 
-<div class="mt-10">
-    <h2 class="mx-auto pb-2 text-xl">My Subscribers</h2>
-    <table class="min-w-full leading-normal">
-        <thead>
-            <tr class="text-left bg-gray-100">
-                <th class="px-5 py-3">ID</th>
-                <th class="px-5 py-3">Username</th>
-                <th class="px-5 py-3">Role</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($users as $user): ?>
-            <tr class="hover:bg-gray-50">
-                <td class="px-5 py-2"><?php echo htmlspecialchars($user['id']); ?></td>
-                <td class="px-5 py-2"><?php echo htmlspecialchars($user['username']); ?></td>
-                <td class="px-5 py-2"><?php echo htmlspecialchars($user['role']); ?></td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-</div>
+include '../partials/header.php';
+?>
 
-
-
-
-
+<main class="mt-10">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h2 class="text-lg leading-6 font-medium text-gray-900">My Subscribers</h2>
+            </div>
+            <div class="border-t border-gray-200">
+                <dl>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">First Name</dt>
+                        <dt class="text-sm font-medium text-gray-500">Last Name</dt>
+                        <dt class="text-sm font-medium text-gray-500">Email</dt>
+                    </div>
+                    <?php foreach ($subscribers as $subscriber): ?>
+                        <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dd class="text-sm text-gray-900"><?php echo htmlspecialchars($subscriber['first_name']); ?></dd>
+                            <dd class="text-sm text-gray-900"><?php echo htmlspecialchars($subscriber['last_name']); ?></dd>
+                            <dd class="text-sm text-gray-900"><?php echo htmlspecialchars($subscriber['email']); ?></dd>
+                        </div>
+                    <?php endforeach; ?>
+                </dl>
+            </div>
+        </div>
+    </div>
+</main>
 
 <?php include '../partials/footer.php'; ?>
-

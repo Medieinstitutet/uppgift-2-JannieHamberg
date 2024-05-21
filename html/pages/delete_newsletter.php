@@ -1,5 +1,9 @@
 <?php
 session_start();
+include dirname(__DIR__, 1) . '/db_data/auth.php';
+
+
+checkLogin();
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
     die("You must be logged in as a customer to delete a newsletter.");
