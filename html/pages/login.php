@@ -40,3 +40,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <input type="password" name="password" id="password" required>
     <button type="submit">Log In</button>
 </form>
+<p><a href="reset_password.php" class="text-blue-600 hover:text-blue-800">Reset Password</a></p>
